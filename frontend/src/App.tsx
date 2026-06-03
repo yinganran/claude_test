@@ -31,24 +31,21 @@ const TABS: { key: TabType; label: string; desc: string; icon: any; color: strin
   },
 ]
 
-const tabColors: Record<string, { active: string; hover: string; badge: string; glow: string }> = {
+const tabColors: Record<string, { active: string; hover: string; badge: string }> = {
   red: {
     active: 'bg-red-50 text-red-700 border-red-200 shadow-sm',
     hover: 'hover:bg-red-50/50 hover:text-red-600',
     badge: 'bg-red-500 text-white',
-    glow: '',
   },
   blue: {
     active: 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm',
     hover: 'hover:bg-blue-50/50 hover:text-blue-600',
     badge: 'bg-blue-500 text-white',
-    glow: '',
   },
   green: {
     active: 'bg-green-50 text-green-700 border-green-200 shadow-sm',
     hover: 'hover:bg-green-50/50 hover:text-green-600',
     badge: 'bg-green-500 text-white',
-    glow: '',
   },
 }
 

@@ -230,10 +230,6 @@ function StrategyCard({
     blue: 'border-l-blue-400',
   }
 
-  const hasContent = (children as any)?.props?.children?.length > 0 ||
-    (children as any)?.[0]?.props?.children?.length > 0
-
-  // Simplified: just check if children exists
   const isEmpty = !children || (Array.isArray(children) && children.length === 0)
 
   return (

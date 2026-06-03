@@ -100,17 +100,38 @@ def image_to_base64(file_path: str) -> tuple:
     mime_type = mime_map.get(ext, "image/jpeg")
     img = Image.open(file_path)
     max_size = (1920, 1920)
-    if img.size[0] > max_size[0] or img.size[1] > max_size[1]:
+    needs_resize = img.size[0] > max_size[0] or img.size[1] > max_size[1]
+    if needs_resize:
         img.thumbnail(max_size, Image.LANCZOS)
+
+    src_fmt = (img.format or "JPEG").upper()
+    if src_fmt == "JPEG" and not needs_resize:
+        with open(file_path, "rb") as f:
+            b64_data = base64.b64encode(f.read()).decode("utf-8")
+        return f"data:{mime_type};base64,{b64_data}", mime_type
+
     buffer = io.BytesIO()
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
     img.save(buffer, format="JPEG", quality=85)
     b64_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
     return f"data:{mime_type};base64,{b64_data}", mime_type
 
 
+# Registry: extension → (file_path, content_bytes) → extracted text
+DOC_EXTRACTORS = {
+    ".pdf": lambda fp, _: extract_text_from_pdf(fp),
+    ".docx": lambda fp, _: extract_text_from_docx(fp),
+    ".doc": lambda fp, _: extract_text_from_docx(fp),
+    ".txt": lambda _, c: c.decode("utf-8", errors="ignore"),
+    ".csv": lambda _, c: c.decode("utf-8", errors="ignore"),
+    ".md": lambda _, c: c.decode("utf-8", errors="ignore"),
+}
+
+ALLOWED_IMAGES = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
+
+
 async def process_uploaded_file(file: UploadFile) -> dict:
-    allowed_images = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
-    allowed_docs = {".pdf", ".docx", ".doc", ".txt", ".csv", ".md"}
     ext = os.path.splitext(file.filename or "")[1].lower()
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     safe_name = f"{timestamp}_{file.filename}"
@@ -119,20 +140,14 @@ async def process_uploaded_file(file: UploadFile) -> dict:
     with open(file_path, "wb") as f:
         f.write(content)
     result = {"filename": file.filename, "file_type": ext, "text": "", "images": []}
-    if ext in allowed_images:
+    if ext in ALLOWED_IMAGES:
         data_url, mime_type = image_to_base64(file_path)
         result["images"].append({"data_url": data_url, "mime_type": mime_type})
         ocr_text = extract_text_from_image(file_path)
         if ocr_text:
             result["text"] = ocr_text
-    elif ext in allowed_docs:
-        if ext == ".pdf":
-            result["text"] = extract_text_from_pdf(file_path)
-        elif ext in (".docx", ".doc"):
-            result["text"] = extract_text_from_docx(file_path)
-        elif ext in (".txt", ".csv", ".md"):
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                result["text"] = f.read()
+    elif ext in DOC_EXTRACTORS:
+        result["text"] = DOC_EXTRACTORS[ext](file_path, content)
     return result
 
 

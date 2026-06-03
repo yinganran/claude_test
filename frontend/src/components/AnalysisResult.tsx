@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   AlertTriangle, CheckCircle, ChevronDown, ChevronUp,
-  MessageCircle, Brain, Target, AlertCircle, Zap, Eye, ArrowRight, Lightbulb, ShieldAlert
+  MessageCircle, Brain, Target, AlertCircle, Zap, Eye, Lightbulb, ShieldAlert
 } from 'lucide-react'
 import type { ProblemItem, ConversationMessage } from '../types'
 
